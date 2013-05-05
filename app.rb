@@ -42,7 +42,7 @@ end
 def get_xunlei_file
   stdout_str, status = Open3.capture2("lx list mkv mp4 --dcid -gcid --download-url")  
   keys=%w{no name status dcid gcid url}
-  xunlei_file_list=stdout_str.encode('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))] }.delete_if{|file| file['status'] != 'completed'}
+  xunlei_file_list=stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))] }.delete_if{|file| file['status'] != 'completed'}
 end
 
 def prepare_subtitle
