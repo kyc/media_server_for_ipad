@@ -1,0 +1,5 @@
+--- !ruby/object:OpenStruct
+table:
+  :video: ''
+  :subtitle: ''
+modifiable: true

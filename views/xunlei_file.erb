@@ -1,0 +1,11 @@
+<tr>
+	<td>
+		<%= file['name'] %>
+	</td>
+	<td>
+		<a class="btn btn-small" href="/add_to_job?type=video&file=<%= Base64.encode64(file['url']) %>"><i class="icon-plus"></i> Add</a>
+	</td>
+	<td>
+		<a class="btn btn-small" href="/get_xunlei_subtitle?name=<%= file['name'] %>&dcid=<%= file['dcid'] %>&gcid=<%= file['gcid']%>" remote="true"><i class="icon-align-justify"></i> Get_Subtitle</a>
+	</td>
+</tr>

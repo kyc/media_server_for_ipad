@@ -1,0 +1,11 @@
+<table class="table table-hover table-bordered">
+	<thead>
+		<tr>
+			<th>Subtitle</th>
+			<th>Action</th>
+		</tr>
+	</thead>
+	<% @subtitle_files.each do |file| %>
+		<%= partial(:subtitle_file, :file => file) %>
+	<% end %>
+</table>

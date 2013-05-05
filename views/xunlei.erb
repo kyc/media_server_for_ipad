@@ -1,0 +1,11 @@
+<table class="table table-hover table-bordered">
+	<thead>
+		<tr>
+			<th>Movie Name</th>
+			<th>Action</th>
+		</tr>
+	</thead>
+	<% @xunlei_files.each do |file| %>
+		<%= partial(:xunlei_file, :file => file) %>
+	<% end %>
+</table>

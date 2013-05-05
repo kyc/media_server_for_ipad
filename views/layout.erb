@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>K.Y.C's Home Media Server</title>
+    <script src="/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+		<script src="/vendor/bootstrap/js/application.js"></script>
+    <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" href="/vendor/fontawesome/css/font-awesome.min.css">
+  </head>
+  <body style="padding-top: 50px;">
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+
+            <a class="brand" href="/">
+             Media Server
+            </a>
+
+            <ul class="nav">
+              <li><a href="/">Home</a></li>
+              <li><a href="/xunlei">Xunlei</a></li>
+							<li><a href="/subtitle">Subtitle</a></li>
+							<li><a href="/job">Job</a></li>
+            </ul>
+            <ul class="nav pull-right">
+								<a class="btn btn-small span2" href="/play"><i class="icon-play"></i> Play</a>
+            </ul>
+        </div>
+      </div>
+    </div>
+
+
+	<div class="container">
+		<%if @error then %>
+			<div class="alert alert-error"><%=@error%></div>
+		<% end %>
+    	<%= yield %>
+	</div>
+  </body>
+</html>

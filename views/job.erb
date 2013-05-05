@@ -1,0 +1,22 @@
+<table class="table table-hover table-bordered">
+	<thead>
+		<tr>
+			<th>Job</th>
+		</tr>
+	</thead>
+	<tr>
+		<td>
+			<%= Base64.decode64(@job.video)[0,100] %>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<%= @job.subtitle %>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<a class="btn btn-small" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
+		</td>
+	</tr>
+</table>
