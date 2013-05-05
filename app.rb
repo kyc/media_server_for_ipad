@@ -4,7 +4,6 @@ require 'open-uri'
 require 'open3'
 require 'json'
 require 'find'
-require 'yaml'
 require 'ostruct'
 require 'srt'
 require "base64"
@@ -98,7 +97,7 @@ get '/get_xunlei_subtitle' do
   subtitles=JSON.parse(open(xunlei_url).read)['sublist']
   begin
     subtitle=subtitles.find{|sub| sub['sname'] =~ /srt$/i}
-    filename = params[:name].sub(/.mkv$/i,'.srt')
+    filename = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
     File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read)
   rescue Exception => e
     logger.info e
@@ -113,7 +112,7 @@ end
 
 get '/subtitle' do
   logger.info settings.video_ext_types
-  @subtitle_files = Find.find(settings.subtitle_folder).select{ |path| path =~ /#{settings.subtitle_ext_types.join('|')+'$'}/}
+  @subtitle_files = Find.find(settings.subtitle_folder).select{ |path| path =~ /(#{settings.subtitle_ext_types.join('|')})$/i}
   erb :subtitle
 end
 
@@ -137,33 +136,3 @@ get '/add_to_job' do
   end  
   erb :job 
 end
-
-
-
-# get '/login/form' do 
-#   erb :login_form
-# end
-# 
-# post '/login/attempt' do
-#   session[:identity] = params['username']
-#   where_user_came_from = session[:previous_url] || '/'
-#   redirect to where_user_came_from 
-# end
-# 
-# get '/logout' do
-#   session.delete(:identity)
-#   erb "<div class='alert alert-message'>Logged out</div>"
-# end
-# 
-# 
-# get '/secure/place' do
-#   erb "This is a secret place that only <%=session[:identity]%> has access to!"
-# end
-
-# before '/secure/*' do
-#   if !session[:identity] then
-#     session[:previous_url] = request.path
-#     @error = 'Sorry guacamole, you need to be logged in to visit ' + request.path
-#     halt erb(:login_form)
-#   end
-# end
