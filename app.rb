@@ -83,7 +83,7 @@ helpers do
       
       cmd_step_1  = "cd #{settings.cache_folder}"
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -c:v copy -vbsf h264_mp4toannexb -c:a aac -strict 2 -absf aac_adtstoasc -map 0:0 -map 0:1 -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts"
+      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -c:v copy -vbsf h264_mp4toannexb -c:a aac -strict -2 -map 0:0 -map 0:1 -f segment -segment_time 10 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts"
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
@@ -94,7 +94,7 @@ helpers do
       end
       
       Process.spawn(movie_cmd)
-      sleep 10
+      sleep 15
     end
   end
   
