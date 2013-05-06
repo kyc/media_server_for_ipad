@@ -83,7 +83,7 @@ helpers do
       
       cmd_step_1  = "cd #{settings.cache_folder}"
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -acodec aac -strict -2  -map 0:0 -map 0:1 -vbsf h264_mp4toannexb -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts > ffmpeg.log"
+      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -c:v copy -bsf:v h264_mp4toannexb -a:v -strict experimental  -map 0:0 -map 0:1 -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts"
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
