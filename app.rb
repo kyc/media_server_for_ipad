@@ -130,7 +130,7 @@ end
 get '/play' do
   sub=prepare_subtitle
   gen_m3u8
-  
+  sleep 10
   erb :play
 end
 
