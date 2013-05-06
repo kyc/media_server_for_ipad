@@ -4,19 +4,19 @@
 			<th>Job</th>
 		</tr>
 	</thead>
+	<% unless @job.video.empty? && @job.subtitle.empty? %>
 	<tr>
+		<td>Video</td>
 		<td>
-			<%= Base64.decode64(@job.video)[0,100] %>
+			<%= @job.video_name %>
 		</td>
 	</tr>
 	<tr>
+		<td>Subtitle</td>
 		<td>
-			<%= @job.subtitle %>
+			<%= @job.subtitle.split('/').last %>
 		</td>
 	</tr>
-	<tr>
-		<td>
-			<a class="btn btn-small" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
-		</td>
-	</tr>
+	<% end %>
 </table>
+<div class="pull-right"><a class="btn btn-small span2" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a></div>

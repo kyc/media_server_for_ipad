@@ -14,7 +14,7 @@ configure do
   set :cache_folder       , Proc.new { File.join(root, "static", "cache") }
   set :video_ext_types    , %w{.mkv .rmvb .mp4}
   set :subtitle_ext_types , %w{.srt}
-  set :job                , OpenStruct.new(:video => '',:subtitle => '')
+  set :job                , OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
   set :vtt                , Proc.new { File.join(root, "static", "cache","subtitle.vtt") }
   set :ffmpeg_path        , '/usr/local/bin/ffmpeg'
   set :cookie             , '/Users/kyc/.xunlei.lixian.cookies'
@@ -131,7 +131,7 @@ get '/job' do
 end
 
 get '/clean_job' do
-  settings.job  = OpenStruct.new(:video => '',:subtitle => '')
+  settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
   
   redirect  '/job' 
 end
@@ -141,7 +141,8 @@ get '/add_to_job' do
   
   case params[:type]
   when 'video'
-    @job.video    = settings.job.video    = params[:file]
+    @job.video      = settings.job.video      = params[:file]
+    @job.video_name = settings.job.video_name = params[:name]
   when 'subtitle'
     @job.subtitle = settings.job.subtitle = params[:file]
   end
