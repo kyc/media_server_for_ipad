@@ -1,4 +1,5 @@
 *.srt
 *.ts
 *.log
+*.vtt
 .DS_Store

@@ -49,7 +49,7 @@ helpers do
       webvtt_lines << "00:00:02.090 --> 02:00:00.000"
       webvtt_lines << " "
     end 
-    
+    logger.info webvtt_lines.inspect
     File.new(settings.vtt, "w").write(webvtt_lines.compact.join("\n\n"))
   end
 
