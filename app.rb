@@ -44,7 +44,7 @@ helpers do
         webvtt_lines << "#{srt_line_to_webvtt(line)}"
       end
     else
-      webvtt_lines << "00:00:02.090 --> 03:00:00.000"
+      webvtt_lines << "00:00:02.090 --> 03:00:00.000\n\n"
     end 
     
     File.new(settings.vtt, "w").write(webvtt_lines.compact.join("\n\n"))
