@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'sinatra'
 require 'open-uri'
-require 'open3'
 require 'json'
 require 'find'
 require 'ostruct'
@@ -17,7 +16,7 @@ configure do
   set :job                , OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
   set :vtt                , Proc.new { File.join(root, "static", "cache","subtitle.vtt") }
   set :ffmpeg_path        , '/usr/local/bin/ffmpeg'
-  set :cookie             , '/Users/kyc/.xunlei.lixian.cookies'
+  set :cookie             , File.expand_path('~') + '/' + '.xunlei.lixian.cookies'
   set :gdriveid           , File.new(settings.cookie,'r').each_line.find{|line| line =~ /gdriveid/}.split(';').first.split('=').last
 end
 
@@ -27,10 +26,12 @@ helpers do
     erb(template, :layout => false, :locals => locals)
   end
   
-  def get_xunlei_file
-    stdout_str, status  = Open3.capture2("lx list mkv mp4 --dcid -gcid --download-url")  
-    keys                = %w{no name status dcid gcid url}
-    xunlei_file_list    = stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))]}.delete_if{|file| file['status'] != 'completed'}
+  def get_xunlei_file(file_name=nil)
+    cmd = "lx list mkv mp4 --dcid -gcid --download-url"
+    cmd += " | grep #{file_name}" if  file_name
+    stdout_str       = `#{cmd}` 
+    keys             = %w{no name status dcid gcid url}
+    xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))]}.select{|file| file['status'] == 'completed'}.sort_by{|file| file['no'].to_i * -1}
   end
 
   def prepare_subtitle
@@ -59,6 +60,22 @@ helpers do
       return [time_srt,text].join("\n")
     end
   end
+  
+  def get_subtitle(gcid,dcid)
+    xunlei_url  = "http://i.vod.xunlei.com/subtitle/list?gcid=#{gcid}&cid=#{dcid}&userid=153322167"
+    subtitles   = JSON.parse(open(xunlei_url).read)['sublist']
+    
+    begin
+      subtitle  = subtitles.select{|sub| sub['sname'] =~ /srt$/i}[0]
+      filename  = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
+      File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read) if subtitle['surl']
+      return filename
+    rescue Exception => e
+      logger.info "subtitle not find!"
+      return nil
+    end
+    
+  end
 
   def gen_m3u8
     if settings.job.video
@@ -67,7 +84,7 @@ helpers do
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
       cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -acodec aac -strict -2 -vbsf h264_mp4toannexb -map 0 -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts > ffmpeg.log"
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
-      
+  
       begin
         system('killall ffmpeg')
         system("cd #{settings.cache_folder};rm -rf *.ts")
@@ -85,6 +102,26 @@ before %r{.+\.json$} do
   content_type 'application/json'
 end
 
+before /add_to_job/ do
+
+  if params[:type] == 'video'
+    settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+    exist_file = File.join(settings.subtitle_folder, params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt'))
+    unless File.exists?(exist_file)
+      xunlei_file = get_xunlei_file(params[:name])[0]
+      subtitle    = get_subtitle(xunlei_file['gcid'],xunlei_file['dcid'])
+      if subtitle
+        logger.info File.join(settings.subtitle_folder, subtitle)
+        params.merge!(:subtitle => File.join(settings.subtitle_folder, subtitle))
+      else
+        return nil
+      end
+    else
+      params.merge!(:subtitle => exist_file)
+    end
+  end
+end
+
 
 get '/' do
   erb "home"
@@ -98,16 +135,7 @@ get '/play' do
 end
 
 get '/get_xunlei_subtitle' do  
-  xunlei_url  = "http://i.vod.xunlei.com/subtitle/list?gcid=#{params[:gcid]}&cid=#{params[:dcid]}&userid=153322167"
-  subtitles   = JSON.parse(open(xunlei_url).read)['sublist']
-  
-  begin
-    subtitle  = subtitles.find{|sub| sub['sname'] =~ /srt$/i}
-    filename  = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
-    File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read)
-  rescue Exception => e
-    logger.info e
-  end
+  subtitle = get_subtitle(params[:gcid],params[:dcid])
   
   redirect '/subtitle'
 end
@@ -138,14 +166,25 @@ end
 
 get '/add_to_job' do
   @job = settings.job
-  
+
   case params[:type]
   when 'video'
     @job.video      = settings.job.video      = params[:file]
     @job.video_name = settings.job.video_name = params[:name]
+    @job.subtitle = settings.job.subtitle     = params[:subtitle] if params[:subtitle]
   when 'subtitle'
     @job.subtitle = settings.job.subtitle = params[:file]
   end
   
   erb :job 
+end
+
+get '/task' do
+  erb :task
+end
+
+post '/task' do
+  url = params[:url]
+  system("lx add #{url}")
+  redirect '/xunlei'
 end
