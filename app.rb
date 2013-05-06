@@ -66,7 +66,7 @@ helpers do
     subtitles   = JSON.parse(open(xunlei_url).read)['sublist']
     
     begin
-      subtitle  = subtitles.select{|sub| sub['sname'] =~ /srt$/i}[0]
+      subtitle  = subtitles.select{|sub| sub['sname'] =~ /srt$/i}.select{|sub| sub['sname'] =~ /[\u4e00-\u9fa5]|ch/i}[0]
       filename  = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
       File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read) if subtitle['surl']
       return filename
@@ -82,7 +82,7 @@ helpers do
       
       cmd_step_1  = "cd #{settings.cache_folder}"
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -acodec aac -strict -2 -vbsf h264_mp4toannexb -map 0 -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts > ffmpeg.log"
+      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -acodec aac -strict -2  -map 0:0 -map 0:1 -vbsf h264_mp4toannexb -f segment -segment_time 4 -segment_list movie.m3u8 -segment_format mpegts stream%05d.ts > ffmpeg.log"
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
