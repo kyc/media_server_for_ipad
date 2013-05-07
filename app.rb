@@ -21,6 +21,10 @@ configure do
 end
 
 helpers do
+  
+  def media_uri
+    uri = settings.job.subtitle.empty? ? 'cache/movie.m3u8' : 'cache/play.m3u8'
+  end
 
   def partial (template, locals = {})
     erb(template, :layout => false, :locals => locals)
@@ -83,7 +87,7 @@ helpers do
       
       cmd_step_1  = "cd #{settings.cache_folder}"
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 -async 1 -map 0:1  -threads 0  -f segment -segment_time 5 -flags2 +fast -flags -global_header -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags +live stream%05d.ts"
+      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 -async 1 -map 0:1  -threads 0  -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags +live stream%05d.ts"
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
