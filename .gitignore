@@ -3,3 +3,8 @@
 *.log
 *.vtt
 .DS_Store
+static/cache/subtitle.vtt
+
+static/cache/movie.m3u8
+
+static/cache/movie.m3u8
