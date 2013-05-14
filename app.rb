@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'rubygems'
 require 'sinatra'
 require 'open-uri'
@@ -53,6 +54,10 @@ helpers do
     
     unless settings.job.subtitle.empty?
       subtitle_file = File.new(settings.job.subtitle, "r").read
+      unless CharDet.detect(subtitle_file) =~ /utf-8/i
+        subtitle_file = subtitle_file.encode!("UTF-8", CharDet.detect(subtitle_file).encoding)
+      end
+      subtitle_file = subtitle_file.encode!("UTF-8", CharDet.detect(subtitle_file).encoding)
       SRT::File.parse(subtitle_file).lines.delete_if{|line| line.start_time.nil?}.sort_by{ |line| line.start_time}.uniq{|line| line.start_time}.each do |line|
         webvtt_lines << "#{srt_line_to_webvtt(line)}"
       end
@@ -99,9 +104,9 @@ helpers do
 
       case RUBY_PLATFORM
       when  /mips/
-        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
+        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*3)' stream%05d.ts"
       when /darwin/
-        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*3)' stream%05d.ts"  
       end
 
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
@@ -222,6 +227,8 @@ get '/audio_stream' do
   settings.job.audio_stream = '2'
   "audio_stream 2"
 end
+
+
 
 get '/yyets_sub' do
   get_yyets_sub(params[:id],params[:name])
