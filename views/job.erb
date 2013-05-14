@@ -1,4 +1,4 @@
-<table class="table table-hover table-bordered">
+<table class="table table-bordered">
 	<thead>
 		<tr>
 			<th>Job</th>
@@ -7,8 +7,11 @@
 	<% unless @job.video.empty? && @job.subtitle.empty? %>
 	<tr>
 		<td>Video</td>
-		<td>
+		<td class="span12">
 			<%= @job.video_name %>
+		</td>
+		<td style="text-align: center">
+			<button class="btn btn-mini" type="button" id="audio_stream" >change_stream</button>
 		</td>
 	</tr>
 	<tr>
@@ -16,10 +19,13 @@
 		<td>
 			<%= @job.subtitle.split('/').last %>
 		</td>
+		<td>
+			<!-- <button class="btn btn-mini" type="button" id="video_reload">Audio Stream 2</button> -->
+		</td>
 	</tr>
 	<% end %>
 </table>
 <div class="pull-right">
-	<!-- <a class="btn btn-small span2" href="/clean_job"><i class="icon-align-justify"></i> Get Subtitle</a> -->
+	
 	<a class="btn btn-small span2" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
 </div>

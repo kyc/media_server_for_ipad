@@ -13,7 +13,7 @@ configure do
   set :cache_folder       , Proc.new { File.join(root, "static", "cache") }
   set :video_ext_types    , %w{.mkv .rmvb .mp4}
   set :subtitle_ext_types , %w{.srt}
-  set :job                , OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+  set :job                , OpenStruct.new(:video => '',:video_name => '',:subtitle => '',:audio_stream=>'1')
   set :vtt                , Proc.new { File.join(root, "static", "cache","subtitle.vtt") }
   set :ffmpeg_path        , '/usr/local/bin/ffmpeg'
   set :cookie             , File.expand_path('~') + '/' + '.xunlei.lixian.cookies'
@@ -35,7 +35,7 @@ helpers do
     cmd += " | grep #{file_name}" if  file_name
     stdout_str       = `#{cmd}` 
     keys             = %w{no name status dcid gcid url}
-    xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))]}.select{|file| file['status'] == 'completed'}.sort_by{|file| file['no'].to_i * -1}
+    xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))]}.select{|file| file['status'] == 'completed'  && file['url'] =~ /^http/}.sort_by{|file| file['no'].to_i * -1}
   end
 
   def prepare_subtitle
@@ -44,7 +44,7 @@ helpers do
     
     unless settings.job.subtitle.empty?
       subtitle_file = File.new(settings.job.subtitle, "r").read
-      SRT::File.parse(subtitle_file).lines.sort_by{ |line| line.start_time}.uniq{|line| line.start_time}.each do |line|
+      SRT::File.parse(subtitle_file).lines.delete_if{|line| line.start_time.nil?}.sort_by{ |line| line.start_time}.uniq{|line| line.start_time}.each do |line|
         webvtt_lines << "#{srt_line_to_webvtt(line)}"
       end
     else
@@ -87,7 +87,14 @@ helpers do
       
       cmd_step_1  = "cd #{settings.cache_folder}"
       cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 -async 1 -map 0:1  -threads 0  -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags +live stream%05d.ts"
+
+      case RUBY_PLATFORM
+      when  /mips/
+        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
+      when /darwin/
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
+      end
+
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
@@ -111,7 +118,8 @@ end
 before /add_to_job/ do
 
   if params[:type] == 'video'
-    settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+    # settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+    settings.job.video = settings.job.video_name = settings.job.subtitle = ''
     exist_file = File.join(settings.subtitle_folder, params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt'))
     unless File.exists?(exist_file)
       xunlei_file = get_xunlei_file(params[:name])[0]
@@ -164,8 +172,8 @@ get '/job' do
 end
 
 get '/clean_job' do
-  settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
-  
+  # settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+  settings.job.video = settings.job.video_name = settings.job.subtitle = ''
   redirect  '/job' 
 end
 
@@ -176,9 +184,9 @@ get '/add_to_job' do
   when 'video'
     @job.video      = settings.job.video      = params[:file]
     @job.video_name = settings.job.video_name = params[:name]
-    @job.subtitle = settings.job.subtitle     = params[:subtitle] if params[:subtitle]
+    @job.subtitle   = settings.job.subtitle   = params[:subtitle] if params[:subtitle]
   when 'subtitle'
-    @job.subtitle = settings.job.subtitle = params[:file]
+    @job.subtitle   = settings.job.subtitle   = params[:file]
   end
   
   erb :job 
@@ -192,4 +200,9 @@ post '/task' do
   url = params[:url]
   system("lx add #{url}")
   redirect '/xunlei'
+end
+
+get '/audio_stream' do
+  settings.job.audio_stream = '2'
+  "audio_stream 2"
 end
