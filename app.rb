@@ -6,6 +6,8 @@ require 'find'
 require 'ostruct'
 require 'srt'
 require 'base64'
+require 'zip/zipfilesystem'
+require 'rchardet19'
 
 configure do
   set :public_folder      , Proc.new { File.join(root, "static") }
@@ -19,6 +21,13 @@ configure do
   set :cookie             , File.expand_path('~') + '/' + '.xunlei.lixian.cookies'
   set :gdriveid           , File.new(settings.cookie,'r').each_line.find{|line| line =~ /gdriveid/}.split(';').first.split('=').last
 end
+
+class String
+  def yyets_srt
+    self.encode!("UTF-8", CharDet.detect(self).encoding) =~ /繁体\&英文\.srt$/ ? self.split('/').last : nil
+  end 
+end
+
 
 helpers do
   
@@ -90,9 +99,9 @@ helpers do
 
       case RUBY_PLATFORM
       when  /mips/
-        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
+        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
       when /darwin/
-        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
       end
 
       movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
@@ -107,6 +116,13 @@ helpers do
       Process.spawn(movie_cmd)
       sleep 15
     end
+  end
+  
+  def get_yyets_sub(id,filename)
+    zip_file=open("http://www.yyets.com/subtitle/index/download?id=#{id}")
+    file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
+    system("rm -rf #{settings.subtitle_folder + '/' + filename}")
+    file.extract(settings.subtitle_folder + '/' + filename)
   end
   
 end
@@ -205,4 +221,9 @@ end
 get '/audio_stream' do
   settings.job.audio_stream = '2'
   "audio_stream 2"
+end
+
+get '/yyets_sub' do
+  get_yyets_sub(params[:id],params[:name])
+  "done"
 end

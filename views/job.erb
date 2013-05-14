@@ -7,11 +7,11 @@
 	<% unless @job.video.empty? && @job.subtitle.empty? %>
 	<tr>
 		<td>Video</td>
-		<td class="span12">
+		<td class="span9" id="video_name">
 			<%= @job.video_name %>
 		</td>
 		<td style="text-align: center">
-			<button class="btn btn-mini" type="button" id="audio_stream" >change_stream</button>
+			<button class="btn btn-mini" type="button" id="audio_stream" >Change Stream</button>
 		</td>
 	</tr>
 	<tr>
@@ -20,12 +20,21 @@
 			<%= @job.subtitle.split('/').last %>
 		</td>
 		<td>
-			<!-- <button class="btn btn-mini" type="button" id="video_reload">Audio Stream 2</button> -->
+			
 		</td>
 	</tr>
 	<% end %>
 </table>
-<div class="pull-right">
-	
-	<a class="btn btn-small span2" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
+<div >
+	<div class="span9">	
+		<div class="input-append pull-left">
+		  <input class="span5" id="yyets_sub_id" type="text" name="sub_id">
+		  <button class="btn" type="submit" id="get_yyets_sub">YYets Sub</button>
+		</div>
+
+		<!-- <button class="btn btn-mini" type="button" id="yyets_sub">YYest Sub</button> -->
+	</div>
+	<div class="span2">
+		<a class="btn btn-middle span2" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
+	</div>
 </div>
