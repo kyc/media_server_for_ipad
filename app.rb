@@ -11,21 +11,21 @@ require 'zip/zipfilesystem'
 require 'rchardet19'
 
 configure do
-  set :public_folder      , Proc.new { File.join(root, "static") }
-  set :subtitle_folder    , Proc.new { File.join(root, "static", "subtitle") }
-  set :cache_folder       , Proc.new { File.join(root, "static", "cache") }
+  set :public_folder      , Proc.new { File.join(root, 'static') }
+  set :subtitle_folder    , Proc.new { File.join(root, 'static', 'subtitle') }
+  set :cache_folder       , Proc.new { File.join(root, 'static', 'cache') }
   set :video_ext_types    , %w{.mkv .rmvb .mp4}
   set :subtitle_ext_types , %w{.srt}
-  set :job                , OpenStruct.new(:video => '',:video_name => '',:subtitle => '',:audio_stream=>'1')
-  set :vtt                , Proc.new { File.join(root, "static", "cache","subtitle.vtt") }
+  set :job                , OpenStruct.new(:video => '', :video_name => '', :subtitle => '', :audio_stream=>'1')
+  set :vtt                , Proc.new { File.join(root, 'static', 'cache', 'subtitle.vtt') }
   set :ffmpeg_path        , '/usr/local/bin/ffmpeg'
   set :cookie             , File.expand_path('~') + '/' + '.xunlei.lixian.cookies'
-  set :gdriveid           , File.new(settings.cookie,'r').each_line.find{|line| line =~ /gdriveid/}.split(';').first.split('=').last
+  set :gdriveid           , File.new(settings.cookie, 'r').each_line.find{|line| line =~ /gdriveid/}.split(';').first.split('=').last
 end
 
 class String
   def yyets_srt
-    self.encode!("UTF-8", CharDet.detect(self).encoding) =~ /繁体\&英文\.srt$/ ? self.split('/').last : nil
+    self.encode!('UTF-8', CharDet.detect(self).encoding) =~ /繁体\&英文\.srt$/ ? self.split('/').last : nil
   end 
 end
 
@@ -40,12 +40,12 @@ helpers do
     erb(template, :layout => false, :locals => locals)
   end
   
-  def get_xunlei_file(file_name=nil)
-    cmd = "lx list mkv mp4 --dcid -gcid --download-url"
+  def get_xunlei_file(file_name = nil)
+    cmd = 'lx list mkv mp4 --dcid -gcid --download-url'
     cmd += " | grep #{file_name}" if  file_name
     stdout_str       = `#{cmd}` 
     keys             = %w{no name status dcid gcid url}
-    xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{|line| Hash[keys.zip(line.split(' '))]}.select{|file| file['status'] == 'completed'  && file['url'] =~ /^http/}.sort_by{|file| file['no'].to_i * -1}
+    xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{ |line| Hash[keys.zip(line.split(' '))] }.select{ |file| file['status'] == 'completed' && file['url'] =~ /^http/ }.sort_by{ |file| file['no'].to_i * -1 }
   end
 
   def prepare_subtitle
@@ -53,24 +53,24 @@ helpers do
     webvtt_lines << %{WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:900000. LOCAL:00:00:00.000}
     
     unless settings.job.subtitle.empty?
-      subtitle_file = File.new(settings.job.subtitle, "r").read
+      subtitle_file = File.new(settings.job.subtitle, 'r').read
       unless CharDet.detect(subtitle_file) =~ /utf-8/i
-        subtitle_file = subtitle_file.encode!("UTF-8", CharDet.detect(subtitle_file).encoding)
+        subtitle_file = subtitle_file.encode!('UTF-8', CharDet.detect(subtitle_file).encoding)
       end
-      subtitle_file = subtitle_file.encode!("UTF-8", CharDet.detect(subtitle_file).encoding)
+      subtitle_file = subtitle_file.encode!('UTF-8', CharDet.detect(subtitle_file).encoding)
       SRT::File.parse(subtitle_file).lines.delete_if{|line| line.start_time.nil?}.sort_by{ |line| line.start_time}.uniq{|line| line.start_time}.each do |line|
         webvtt_lines << "#{srt_line_to_webvtt(line)}"
       end
     else
       webvtt_lines << "00:00:02.090 --> 02:00:00.000 vertical:lr align:end\n -"
     end 
-    file=File.new(settings.vtt, "w")
+    file=File.new(settings.vtt, 'w')
     file.write(webvtt_lines.compact.join("\n\n"))
     file.close 
   end
 
   def srt_line_to_webvtt(line)
-    text = line.text.join("\n").gsub(/^{.*}/,'').gsub(/<\/?[^>]*>/, "")
+    text = line.text.join("\n").gsub(/^{.*}/,'').gsub(/<\/?[^>]*>/, '')
     
     if text.scan(/\d\d\d/).size >= 5
       return nil
@@ -104,12 +104,12 @@ helpers do
 
       case RUBY_PLATFORM
       when  /mips/
-        cmd_step_3="wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
+        cmd_step_3  = "wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}'  -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -acodec copy -map 0:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
       when /darwin/
-        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i \"#{Base64.decode64(settings.job.video)}\" -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers '$cookie' -i '#{Base64.decode64(settings.job.video)}' -vcodec copy -vbsf h264_mp4toannexb  -flags +global_header -map 0:0 -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000  -map 0:#{settings.job.audio_stream}  -async 1 -threads 0 -f segment -segment_time 5  -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"  
       end
 
-      movie_cmd   = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
+      movie_cmd     = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
   
       begin
         system('killall ffmpeg')
@@ -119,7 +119,7 @@ helpers do
       end
       
       Process.spawn(movie_cmd)
-      sleep 15
+      sleep 10
     end
   end
   
@@ -139,27 +139,25 @@ end
 before /add_to_job/ do
 
   if params[:type] == 'video'
-    # settings.job  = OpenStruct.new(:video => '',:video_name => '',:subtitle => '')
+    
     settings.job.video = settings.job.video_name = settings.job.subtitle = ''
     exist_file = File.join(settings.subtitle_folder, params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt'))
-    unless File.exists?(exist_file)
+    
+    if File.exists?(exist_file)
+      params.merge!(:subtitle => exist_file)
+    else
       xunlei_file = get_xunlei_file(params[:name])[0]
       subtitle    = get_subtitle(xunlei_file['gcid'],xunlei_file['dcid'])
-      if subtitle
-        logger.info File.join(settings.subtitle_folder, subtitle)
-        params.merge!(:subtitle => File.join(settings.subtitle_folder, subtitle))
-      else
-        return nil
-      end
-    else
-      params.merge!(:subtitle => exist_file)
+      subtitle ? params.merge!(:subtitle => File.join(settings.subtitle_folder, subtitle)) : nil
     end
+  
   end
+
 end
 
 
 get '/' do
-  erb "home"
+  erb 'home'
 end
 
 get '/play' do
@@ -232,5 +230,5 @@ end
 
 get '/yyets_sub' do
   get_yyets_sub(params[:id],params[:name])
-  "done"
+  'done'
 end
