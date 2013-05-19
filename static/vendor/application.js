@@ -23,7 +23,8 @@ $(function() {
 
  $(function() {
 	 $("button#get_yyets_sub").click(function(){
-		 var yyets_id		=$("input#yyets_sub_id").val().split('/').pop();
+		 // var yyets_id		=$("input#yyets_sub_id").val().split('/').pop();
+		 var yyets_id		=$("input#yyets_sub_id").val()
 		 var yyets_name	=$("td#video_name").text().replace('mkv','srt').trim();
 			 $.get("yyets_sub", { id: yyets_id, name: yyets_name})
 				 .done(function(responseText) {

@@ -107,7 +107,7 @@ helpers do
       when  /mips/
         cmd_step_3  = "wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}' -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -acodec copy #{ffmpeg_arvg}"
       when /darwin/
-        cmd_step_3  = "#{settings.ffmpeg_path} -headers '$cookie' -i '#{Base64.decode64(settings.job.video)}' -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 #{ffmpeg_arvg}"  
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i '#{Base64.decode64(settings.job.video)}' -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 #{ffmpeg_arvg}"  
       end
 
       movie_cmd     = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
@@ -125,6 +125,9 @@ helpers do
   end
   
   def get_yyets_sub(id,filename)
+    unless id =~ /^\d/
+      id = id.split('/').last
+    end
     zip_file = open("http://www.yyets.com/subtitle/index/download?id=#{id}")
     sub_file = settings.subtitle_folder + '/' + filename
     file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
