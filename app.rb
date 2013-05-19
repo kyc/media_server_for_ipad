@@ -125,10 +125,8 @@ helpers do
   end
   
   def get_yyets_sub(id,filename)
-    unless id =~ /^\d/
-      id = id.split('/').last
-    end
-    zip_file = open("http://www.yyets.com/subtitle/index/download?id=#{id}")
+    sub_id = id =~ /^\d+/ ? id : id.split('/').last
+    zip_file = open("http://www.yyets.com/subtitle/index/download?id=#{sub_id}")
     sub_file = settings.subtitle_folder + '/' + filename
     file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
     system("rm -rf #{sub_file}")
