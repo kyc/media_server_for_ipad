@@ -1,11 +1,11 @@
 <tr>
-	<td>
+	<td class='span10'>
 		<%= file['name'] %>
 	</td>
-	<td>
-		<a class="btn btn-small" href="/add_to_job?type=video&file=<%= Base64.encode64(file['url']) %>&name=<%=file['name'] %>"><i class="icon-plus"></i> Add</a>
+	<td class='span2'>
+		<div class='text-center'><a class="btn btn-small" href="/add_to_job?type=video&file=<%= Base64.encode64(file['url']) %>&name=<%=file['name'] %>"><i class="icon-plus"></i> Add</a></div>
 	</td>
-	<td>
+	<!-- <td>
 		<a class="btn btn-small" href="/get_xunlei_subtitle?name=<%= file['name'] %>&dcid=<%= file['dcid'] %>&gcid=<%= file['gcid']%>" remote="true"><i class="icon-align-justify"></i> Get Subtitle</a>
-	</td>
+	</td> -->
 </tr>

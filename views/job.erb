@@ -10,8 +10,8 @@
 		<td class="span9" id="video_name">
 			<%= @job.video_name %>
 		</td>
-		<td style="text-align: center">
-			<button class="btn btn-mini" type="button" id="audio_stream" >Change Stream</button>
+		<td style="text-align: center" class="span2">
+			<button class="btn btn-mini" type="button" id="audio_stream" >Change Audio</button>
 		</td>
 	</tr>
 	<tr>
@@ -25,16 +25,15 @@
 	</tr>
 	<% end %>
 </table>
-<div >
+
+<div class="row">
 	<div class="span9">	
 		<div class="input-append pull-left">
 		  <input class="span5" id="yyets_sub_id" type="text" name="sub_id">
-		  <button class="btn" type="submit" id="get_yyets_sub">YYets Sub</button>
+		  <button class="btn" type="submit" id="get-yyets-sub">YYets Sub</button>
 		</div>
-
-		<!-- <button class="btn btn-mini" type="button" id="yyets_sub">YYest Sub</button> -->
 	</div>
-	<div class="span2">
-		<a class="btn btn-middle span2" href="/clean_job"><i class="icon-remove-sign"></i> Clean</a>
+	<div>
+		<a class="btn btn-middle span2 pull-right" href="/clean_job"><i class="icon-remove-sign"></i> Reset Job</a>
 	</div>
 </div>

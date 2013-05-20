@@ -1,4 +1,5 @@
 # encoding: UTF-8
+
 require 'rubygems'
 require 'sinatra'
 require 'open-uri'
@@ -33,6 +34,7 @@ class String
 end
 
 
+
 helpers do
   
   def media_uri
@@ -58,7 +60,7 @@ helpers do
     unless settings.job.subtitle.empty?
       subtitle_file       = File.new(settings.job.subtitle, 'r').read
       subtitle_encodeing  =  subtitle_file.enc
-      subtitle_file.encode!('UTF-8', subtitle_encodeing) unless  subtitle_encodeing =~ /utf-8/i
+      subtitle_file.encode!('UTF-8', subtitle_encodeing) unless subtitle_encodeing =~ /utf-8/i
       SRT::File.parse(subtitle_file).lines.delete_if{ |line| line.start_time.nil? }.sort_by{ |line| line.start_time }.uniq{ |line| line.start_time }.each{ |line|  webvtt_lines << "#{srt_line_to_webvtt(line)}" } 
     else
       webvtt_lines << "00:00:02.090 --> 02:00:00.000 vertical:lr align:end\n -"
@@ -162,9 +164,8 @@ before /add_to_job/ do
 
 end
 
-
 get '/' do
-  erb 'home'
+  erb ''
 end
 
 get '/play' do
@@ -204,7 +205,8 @@ end
 
 get '/add_to_job' do
   @job = settings.job
-
+  @job.audio_stream = settings.job.video      = 1
+  
   case params[:type]
   when 'video'
     @job.video      = settings.job.video      = params[:file]
@@ -233,5 +235,10 @@ end
 
 get '/yyets_sub' do
   get_yyets_sub(params[:id],params[:name])
-  'done'
+  'YYets subtile has been added'
+end
+
+get '/kill_ffmpeg' do
+  system("killall ffmpeg")
+  "FFmpeg has been killed!"
 end
