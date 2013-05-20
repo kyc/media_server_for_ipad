@@ -103,13 +103,14 @@ helpers do
       
       cmd_step_1    = "cd #{settings.cache_folder}"
       cmd_step_2    = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      ffmpeg_arvg   = "-map 0:a:#{settings.job.audio_stream} -async 1 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:v:0 -threads 0 -f segment -segment_time 5 -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*3)' stream%05d.ts"
+      ffmpeg_video  = "-vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:v:0"
+      ffmpeg_arvg   = "-map 0:a:#{settings.job.audio_stream} -async 1 -threads 0 -f segment -segment_time 5 -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*3)' stream%05d.ts"
       
       case RUBY_PLATFORM
       when  /mips/
-        cmd_step_3  = "wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}' -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 -acodec copy #{ffmpeg_arvg}"
+        cmd_step_3  = "wget --header 'Cookie: gdriveid=#{settings.gdriveid};' '#{Base64.decode64(settings.job.video)}' -O - 2>/dev/null | #{settings.ffmpeg_path} -i pipe:0 #{ffmpeg_video} -acodec copy #{ffmpeg_arvg}"
       when /darwin/
-        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i '#{Base64.decode64(settings.job.video)}' -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 #{ffmpeg_arvg}"  
+        cmd_step_3  = "#{settings.ffmpeg_path} -headers \"$cookie\" -i '#{Base64.decode64(settings.job.video)}' #{ffmpeg_video} -acodec aac -strict experimental -ac 2 -ab 160k -ar 48000 #{ffmpeg_arvg}"  
       end
 
       movie_cmd     = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
