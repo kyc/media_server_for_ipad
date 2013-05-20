@@ -101,9 +101,9 @@ helpers do
   def gen_m3u8
     if settings.job.video
       
-      cmd_step_1  = "cd #{settings.cache_folder}"
-      cmd_step_2  = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
-      ffmpeg_arvg = "-map 0:#{settings.job.audio_stream} -async 1 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:0 -threads 0 -f segment -segment_time 5 -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*5)' stream%05d.ts"
+      cmd_step_1    = "cd #{settings.cache_folder}"
+      cmd_step_2    = "printf -v cookie 'Cookie: gdriveid=#{settings.gdriveid}\\r\\n'"
+      ffmpeg_arvg   = "-map 0:a:#{settings.job.audio_stream} -async 1 -vcodec copy -vbsf h264_mp4toannexb -flags +global_header -map 0:v:0 -threads 0 -f segment -segment_time 5 -segment_list movie.m3u8 -segment_format mpegts -segment_list_flags live -force_key_frames 'expr:gte(t,n_forced*3)' stream%05d.ts"
       
       case RUBY_PLATFORM
       when  /mips/
@@ -137,7 +137,7 @@ helpers do
   
   def job_reset
     settings.job.video = settings.job.video_name = settings.job.subtitle = ''
-    settings.job.audio_stream = 1
+    settings.job.audio_stream = 0
   end
   
 end
@@ -206,7 +206,7 @@ end
 
 get '/add_to_job' do
   @job = settings.job
-  @job.audio_stream = settings.job.audio_stream      = 1
+  @job.audio_stream = settings.job.audio_stream  = 0
   
   case params[:type]
   when 'video'
@@ -230,7 +230,7 @@ post '/task' do
 end
 
 get '/audio_stream' do
-  settings.job.audio_stream = '2'
+  settings.job.audio_stream = 1
   "audio_stream 2"
 end
 
