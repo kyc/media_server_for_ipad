@@ -137,6 +137,7 @@ helpers do
   
   def job_reset
     settings.job.video = settings.job.video_name = settings.job.subtitle = ''
+    settings.job.audio_stream = 1
   end
   
 end
@@ -205,7 +206,7 @@ end
 
 get '/add_to_job' do
   @job = settings.job
-  @job.audio_stream = settings.job.video      = 1
+  @job.audio_stream = settings.job.audio_stream      = 1
   
   case params[:type]
   when 'video'
