@@ -114,7 +114,11 @@ helpers do
       end
 
       movie_cmd     = cmd_step_1 + ';' + cmd_step_2 + ';' + cmd_step_3
+      
+      logger.info "-"*80
       logger.info movie_cmd
+      logger.info "-"*80
+      
       begin
         system('killall ffmpeg')
         system("cd #{settings.cache_folder};rm -rf *.ts")
