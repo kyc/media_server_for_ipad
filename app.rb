@@ -46,10 +46,10 @@ helpers do
   end
   
   def get_xunlei_file(file_name = nil)
-    cmd = 'lx list mkv mp4 --dcid -gcid -date --download-url'
+    cmd = 'lx list mkv mp4 --dcid -gcid --download-url'
     cmd += " | grep #{file_name}" if  file_name
     stdout_str       = `#{cmd}` 
-    keys             = %w{no name status dcid gcid date url}
+    keys             = %w{no name status dcid gcid url}
     xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{ |line| Hash[keys.zip(line.split(' '))] }.select{ |file| file['status'] == 'completed' && file['url'] =~ /^http/ }
   end
 
