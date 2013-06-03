@@ -82,15 +82,19 @@ helpers do
     end
   end
   
-  def get_subtitle(gcid,dcid)
+  def get_subtitle(gcid,dcid,match=true)
     xunlei_url  = "http://i.vod.xunlei.com/subtitle/list?gcid=#{gcid}&cid=#{dcid}&userid=153322167"
     subtitles   = JSON.parse(open(xunlei_url).read)['sublist']
     
     begin
-      subtitle  = subtitles.select{ |sub| sub['sname'] =~ /srt$/i && sub['sname'] =~ /[\u4e00-\u9fa5]|ch/i}[0]
-      filename  = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
-      File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read) if subtitle['surl']
-      return filename
+      if match
+        subtitle  = subtitles.select{ |sub| sub['sname'] =~ /srt$/i && sub['sname'] =~ /[\u4e00-\u9fa5]|ch/i}[0]
+        filename  = params[:name].sub(/(#{settings.video_ext_types.join('|')})$/i,'.srt')
+        File.new(settings.subtitle_folder + '/' + filename,'wb').write(open(subtitle['surl']).read) if subtitle['surl']
+        return filename
+      else
+        subtitles
+      end
     rescue Exception => e
       logger.info "subtitle not find!"
       return nil
@@ -160,10 +164,10 @@ before /add_to_job/ do
     
     if File.exists?(exist_file)
       params.merge!(:subtitle => exist_file)
-    else
-      xunlei_file = get_xunlei_file(params[:name])[0]
-      subtitle    = get_subtitle(xunlei_file['gcid'],xunlei_file['dcid'])
-      subtitle    ? params.merge!(:subtitle => File.join(settings.subtitle_folder, subtitle)) : nil
+    # else
+    #   xunlei_file = get_xunlei_file(params[:name])[0]
+    #   subtitle    = get_subtitle(xunlei_file['gcid'],xunlei_file['dcid'])
+    #   subtitle    ? params.merge!(:subtitle => File.join(settings.subtitle_folder, subtitle)) : nil
     end
   
   end
@@ -180,10 +184,21 @@ get '/play' do
   erb :play
 end
 
-get '/get_xunlei_subtitle' do  
-  subtitle = get_subtitle(params[:gcid],params[:dcid])
-  
-  redirect '/subtitle'
+get '/get_xunlei_subtitle' do
+  xunlei_file = get_xunlei_file(params[:name])[0]
+  @subtitles = get_subtitle(xunlei_file['gcid'],xunlei_file['dcid'],false)
+  # logger.info @subtitles
+  erb :xunlei_subtitle,:layout => false
+end
+
+get '/download_sub' do
+  logger.info params
+  File.new(settings.subtitle_folder + '/' + params[:name],'wb').write(open(params[:url]).read)
+  "#{params[:name]} has been added"
+end
+
+get '/preview_sub' do
+  open(params[:url]).read
 end
 
 get '/xunlei' do
@@ -194,8 +209,13 @@ end
 
 get '/subtitle' do
   @subtitle_files = Find.find(settings.subtitle_folder).select{ |path| path =~ /(#{settings.subtitle_ext_types.join('|')})$/i}
-  
   erb :subtitle
+end
+
+get '/delete_job_subtitle' do
+  @job = settings.job
+  @job.subtitle   = settings.job.subtitle   = ''
+  ''
 end
 
 get '/job' do

@@ -26,7 +26,6 @@ $(function() {
  		 var yyets_name	=$("td#video_name").text().replace('mkv','srt').trim();
  			 $.get("yyets_sub", { id: yyets_id, name: yyets_name})
  				 .done(function(responseText) {
- 				   // $("button#get_yyets_sub").html(responseText); 
 					 bootstrap_alert.warning(responseText); 
  				 });
  		});	
@@ -37,12 +36,22 @@ $(function() {
 				   bootstrap_alert.warning(responseText); 
 				 });
 		});
-		// setInterval(function() {
-		//  $.get("ffmpeg_stat")
-		// 	 .done(function(responseText) {
-		// 	   console.info(responseText)  
-		// 	 });
-		// }, 1000);	
+		
+ 	 $("button#delete_job_subtitle").click(function(){
+ 			 $.get("delete_job_subtitle")
+ 				 .done(function(responseText) {
+ 				   $("td#job_subtitle").html(responseText);  
+ 				 });
+ 		});
+		
+  	 $("button#get_job_subtitle").click(function(){
+			 var movie_name	= $("td#video_name").text().trim();
+  			 $.get("get_xunlei_subtitle", { name: movie_name})
+  				 .done(function(responseText) {
+						 $("div#subtitle_placeholder").html(responseText);
+  				 });
+  		});
+			
 });
 
 

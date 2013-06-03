@@ -1,0 +1,45 @@
+<hr>
+<table class="table table-hover table-bordered">
+	<thead>
+		<tr>
+			<th>Subtitle</th>
+			<th class="span3" colspan="2"></th>
+		</tr>
+	</thead>
+	<% @subtitles.each do |file| %>
+	<tr>
+		<td class='span10'>
+			<%= file['sname']%>
+		</td>
+		<td style="text-align: center">
+			<button class="btn btn-mini" type="button" data-preview-url="<%= file['surl']%>">Preview</button>
+		</td>	
+		<td style="text-align: center">
+			<button class="btn btn-mini" type="button" data-get-url="<%= file['surl']%>">Download</button>
+		</td>
+
+	</tr>
+		
+	<% end %>
+</table>
+<hr>
+<textarea id='sub_preview' class="span12 hidden" rows="8"></textarea>
+<script>
+	$("[data-get-url]").click(function(){
+	 var name	= $("td#video_name").text().replace('mkv','srt').trim();
+	 var url	= $(this).data('get-url');
+	 $.get("download_sub", { url: url, name: name})
+		 .done(function(responseText) {
+			 bootstrap_alert.warning(responseText); 
+		 });
+	});
+	$("[data-preview-url]").click(function(){
+	 var url	= $(this).data('preview-url');
+	 $('#sub_preview').html('');
+	 $.get("preview_sub", { url: url})
+		 .done(function(responseText) {
+			 $('#sub_preview').html(responseText);
+			});
+
+	});
+</script>

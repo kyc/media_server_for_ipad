@@ -10,22 +10,25 @@
 		<td class="span9" id="video_name">
 			<%= @job.video_name %>
 		</td>
-		<td style="text-align: center" class="span2">
+		<td style="text-align: center" class="span3" colspan="2">
 			<button class="btn btn-mini" type="button" id="audio_stream" >Change Audio</button>
 		</td>
 	</tr>
 	<tr>
 		<td>Subtitle</td>
-		<td>
+		<td id='job_subtitle'>
 			<%= @job.subtitle.split('/').last %>
 		</td>
-		<td>
-			
+		<td style="text-align: center">
+			<button class="btn btn-mini" type="button" id="delete_job_subtitle" >Del Sub</button>
+		</td>	
+		<td style="text-align: center">
+			<button class="btn btn-mini" type="button" id="get_job_subtitle" >Get Sub</button>
 		</td>
 	</tr>
 	<% end %>
 </table>
-
+<hr>
 <div class="row">
 	<div class="span9">	
 		<div class="input-append pull-left">
@@ -37,3 +40,5 @@
 		<a class="btn btn-middle span2 pull-right" href="/clean_job"><i class="icon-remove-sign"></i> Reset Job</a>
 	</div>
 </div>
+
+<div id = "subtitle_placeholder" data-id='adsf'></div>
