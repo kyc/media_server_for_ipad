@@ -31,26 +31,26 @@ $(function() {
  		});	
 		
 	 $("a#ffmpeg-btn").click(function(){
-			 $.get("kill_ffmpeg")
-				 .done(function(responseText) {
-				   bootstrap_alert.warning(responseText); 
-				 });
+		 $.get("kill_ffmpeg")
+			 .done(function(responseText) {
+			   bootstrap_alert.warning(responseText); 
+			 });
 		});
 		
  	 $("button#delete_job_subtitle").click(function(){
- 			 $.get("delete_job_subtitle")
- 				 .done(function(responseText) {
- 				   $("td#job_subtitle").html(responseText);  
- 				 });
+		 $.get("delete_job_subtitle")
+			 .done(function(responseText) {
+			   $("td#job_subtitle").html(responseText);  
+			 });
  		});
 		
-  	 $("button#get_job_subtitle").click(function(){
-			 var movie_name	= $("td#video_name").text().trim();
-  			 $.get("get_xunlei_subtitle", { name: movie_name})
-  				 .done(function(responseText) {
-						 $("div#subtitle_placeholder").html(responseText);
-  				 });
-  		});
+	 $("button#get_job_subtitle").click(function(){
+		 var movie_name	= $("td#video_name").text().trim();
+			 $.get("get_xunlei_subtitle", { name: movie_name})
+				 .done(function(responseText) {
+					 $("div#subtitle_placeholder").html(responseText);
+				 });
+		});
 			
 });
 
