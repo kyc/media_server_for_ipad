@@ -194,6 +194,7 @@ end
 get '/download_sub' do
   logger.info params
   File.new(settings.subtitle_folder + '/' + params[:name],'wb').write(open(params[:url]).read)
+  settings.job.subtitle = params[:name]
   "#{params[:name]} has been added"
 end
 
