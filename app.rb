@@ -139,7 +139,7 @@ helpers do
     sub_id  = id =~ /^\d+/ ? id : id.split('/').last
     cmd     = "cd #{tmpdir};wget \"http://www.yyets.com/subtitle/index/download?id=#{sub_id}\" -O temp.rar;unrar x temp"
     system(cmd)
-    file    = Find.find(tmpdir).select{ |path| path =~ /繁体\&英文\.srt$/}
+    file    = Find.find(tmpdir).select{ |path| path.to_s.encode!('UTF-8', path.to_s.enc) =~ /繁体\&英文\.srt$/}
     sub_file  = settings.subtitle_folder + '/' + filename
     system("rm -rf \"#{sub_file}\"")
     system("mv \"#{file[0]}\" \"#{sub_file}\"")
