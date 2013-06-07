@@ -8,7 +8,7 @@ require 'find'
 require 'ostruct'
 require 'srt'
 require 'base64'
-require 'zip/zipfilesystem'
+#require 'zip/zipfilesystem'
 require 'rchardet19'
 
 configure do
