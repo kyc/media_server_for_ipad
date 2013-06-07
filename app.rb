@@ -33,7 +33,45 @@ class String
   end 
 end
 
+module Unrar
+  class Archive
+    SEARCH_PATH = ["/usr/local/bin", "/usr/bin", "/bin", "/opt/local/bin"]
 
+    attr_accessor :file, :tmpdir
+
+    def initialize(file)
+      self.file = file
+      self.tmpdir = Dir.mktmpdir
+
+      # shitty clean up; fix this
+      at_exit {
+        FileUtils.rm_rf self.tmpdir
+      }
+
+      unless File.readable? file
+        raise "Cannot read #{file}!"
+      end
+    end
+
+    def extract filename, *filenames
+      `#{Archive.unrar} -y x #{self.file} #{filename} #{filenames.join(" ")} #{tmpdir}/`
+
+      Dir["#{tmpdir}/**/*"].to_ary
+    end
+
+    def self.unrar
+      @@unrar ||= search_for "unrar"
+    end
+
+    private
+
+    def self.search_for file
+      SEARCH_PATH.find do |path|
+        return "#{path}/#{file}" if File.exists? "#{path}/#{file}"
+      end
+    end
+  end
+end
 
 helpers do
   
@@ -46,8 +84,8 @@ helpers do
   end
   
   def get_xunlei_file(file_name = nil)
-    cmd = 'lx list mkv mp4 --dcid -gcid --download-url'
-    cmd += " | grep #{file_name}" if  file_name
+    cmd = "lx list mkv mp4 --dcid -gcid --download-url"
+    cmd += " | grep \"#{file_name}\"" if  file_name
     stdout_str       = `#{cmd}` 
     keys             = %w{no name status dcid gcid url}
     xunlei_file_list = stdout_str.force_encoding('utf-8').each_line.map{ |line| Hash[keys.zip(line.split(' '))] }.select{ |file| file['status'] == 'completed' && file['url'] =~ /^http/ }
@@ -60,7 +98,7 @@ helpers do
     unless settings.job.subtitle.empty?
       subtitle_file       = File.new(settings.job.subtitle, 'r').read
       subtitle_encodeing  =  subtitle_file.enc
-      subtitle_file.encode!('UTF-8', subtitle_encodeing) unless subtitle_encodeing =~ /utf-8/i
+      subtitle_file.encode!('UTF-8', subtitle_encodeing, :invalid => :replace, :undef => :replace, :replace => "?") unless subtitle_encodeing =~ /utf-8/i
       SRT::File.parse(subtitle_file).lines.delete_if{ |line| line.start_time.nil? }.sort_by{ |line| line.start_time }.uniq{ |line| line.start_time }.each{ |line|  webvtt_lines << "#{srt_line_to_webvtt(line)}" } 
     else
       webvtt_lines << "00:00:02.090 --> 02:00:00.000 vertical:lr align:end\n -"
@@ -84,6 +122,7 @@ helpers do
   
   def get_subtitle(gcid,dcid,match=true)
     xunlei_url  = "http://i.vod.xunlei.com/subtitle/list?gcid=#{gcid}&cid=#{dcid}&userid=153322167"
+    
     subtitles   = JSON.parse(open(xunlei_url).read)['sublist']
     
     begin
@@ -136,12 +175,19 @@ helpers do
   end
   
   def get_yyets_sub(id,filename)
-    sub_id = id =~ /^\d+/ ? id : id.split('/').last
-    zip_file = open("http://www.yyets.com/subtitle/index/download?id=#{sub_id}")
-    sub_file = settings.subtitle_folder + '/' + filename
-    file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
-    system("rm -rf #{sub_file}")
-    file.extract(sub_file)
+    tmpdir  = Dir.mktmpdir
+    sub_id  = id =~ /^\d+/ ? id : id.split('/').last
+    cmd     = "cd #{tmpdir};wget \"http://www.yyets.com/subtitle/index/download?id=#{sub_id}\" -O temp.rar;unrar x temp"
+    system(cmd)
+    file    = Find.find(tmpdir).select{ |path| path =~ /繁体\&英文\.srt$/}
+    sub_file  = settings.subtitle_folder + '/' + filename
+    system("rm -rf \"#{sub_file}\"")
+    system("mv \"#{file[0]}\" \"#{sub_file}\"")    
+    # zip_file  = open("http://www.yyets.com/subtitle/index/download?id=#{sub_id}")
+    # sub_file  = settings.subtitle_folder + '/' + filename
+    # file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
+    # system("rm -rf \"#{sub_file}\"")
+    # file.extract(sub_file)
   end
   
   def job_reset
@@ -192,10 +238,13 @@ get '/get_xunlei_subtitle' do
 end
 
 get '/download_sub' do
-  logger.info params
-  File.new(settings.subtitle_folder + '/' + params[:name],'wb').write(open(params[:url]).read)
-  settings.job.subtitle = settings.subtitle_folder + '/' + params[:name]
-  "#{params[:name]} has been added"
+  begin
+    File.new(settings.subtitle_folder + '/' + params[:name],'wb').write(open(params[:url]).read)
+    settings.job.subtitle = settings.subtitle_folder + '/' + params[:name]
+    "#{params[:name]} has been added"
+  rescue Exception => e
+    "#{params[:name]} has been failed"
+  end
 end
 
 get '/preview_sub' do
@@ -261,8 +310,15 @@ get '/audio_stream' do
 end
 
 get '/yyets_sub' do
-  get_yyets_sub(params[:id],params[:name])
-  'YYets subtile has been added'
+  begin
+    get_yyets_sub(params[:id],params[:name])
+    'YYets subtile has been added'
+  rescue Exception => e
+    logger.info e
+    'YYets subtile has been failed!'
+  end
+  
+
 end
 
 get '/kill_ffmpeg' do
