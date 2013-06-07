@@ -8,7 +8,7 @@ require 'find'
 require 'ostruct'
 require 'srt'
 require 'base64'
-#require 'zip/zipfilesystem'
+require 'zip/zipfilesystem'
 require 'rchardet19'
 
 configure do
@@ -135,20 +135,29 @@ helpers do
   end
   
   def get_yyets_sub(id,filename)
-    tmpdir  = Dir.mktmpdir
-    sub_id  = id =~ /^\d+/ ? id : id.split('/').last
-    cmd     = "cd #{tmpdir};wget \"http://www.yyets.com/subtitle/index/download?id=#{sub_id}\" -O temp.rar;unrar x temp"
-    system(cmd)
-    file    = Find.find(tmpdir).select{ |path| path.to_s.encode!('UTF-8', path.to_s.enc) =~ /繁体\&英文\.srt$/}
-    sub_file  = settings.subtitle_folder + '/' + filename
-    system("rm -rf \"#{sub_file}\"")
-    system("mv \"#{file[0]}\" \"#{sub_file}\"")
-    system("rm -rf #{tmpdir}")
-    # zip_file  = open("http://www.yyets.com/subtitle/index/download?id=#{sub_id}")
-    # sub_file  = settings.subtitle_folder + '/' + filename
-    # file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
-    # system("rm -rf \"#{sub_file}\"")
-    # file.extract(sub_file)
+    tmpdir    = Dir.mktmpdir
+    sub_id    = id =~ /^\d+/ ? id : id.split('/').last
+    file_url  = "http://www.yyets.com/subtitle/index/download?id=#{sub_id}"
+    strout    = `curl -I #{file_url} | grep Location`
+    file_type      = strout.split('.').last.to_s
+    
+    case 
+    when file_type.match(/zip/)
+      zip_file  = open(file_url)
+      sub_file  = settings.subtitle_folder + '/' + filename
+      file=Zip::ZipFile.open(zip_file).find{|file|  logger.info file.name;file.name.yyets_srt}
+      system("rm -rf \"#{sub_file}\"")
+      file.extract(sub_file)
+    when file_type.match(/rar/)
+      cmd     = "cd #{tmpdir};wget \"#{file_url}\" -O temp.rar;unrar x temp"
+      system(cmd)
+      file    = Find.find(tmpdir).select{ |path| path.to_s.encode!('UTF-8', path.to_s.enc) =~ /繁体\&英文\.srt$/}
+      sub_file  = settings.subtitle_folder + '/' + filename
+      system("rm -rf \"#{sub_file}\"")
+      system("mv \"#{file[0]}\" \"#{sub_file}\"")
+      system("rm -rf #{tmpdir}")
+    end
+    
   end
   
   def job_reset
