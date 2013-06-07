@@ -182,7 +182,8 @@ helpers do
     file    = Find.find(tmpdir).select{ |path| path =~ /繁体\&英文\.srt$/}
     sub_file  = settings.subtitle_folder + '/' + filename
     system("rm -rf \"#{sub_file}\"")
-    system("mv \"#{file[0]}\" \"#{sub_file}\"")    
+    system("mv \"#{file[0]}\" \"#{sub_file}\"")
+    system("rm -rf #{tmpdir}")
     # zip_file  = open("http://www.yyets.com/subtitle/index/download?id=#{sub_id}")
     # sub_file  = settings.subtitle_folder + '/' + filename
     # file=Zip::ZipFile.open(zip_file).find{|file|  file.name.yyets_srt}
