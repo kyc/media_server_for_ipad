@@ -26,7 +26,7 @@ end
 
 class String
   def enc
-     CharDet.detect(self[0..512]).encoding
+     CharDet.detect(self[0..4096]).encoding
   end
   def yyets_srt
     self.encode!('UTF-8', self.enc) =~ /繁体\&英文\.srt$/ ? self.split('/').last : nil
