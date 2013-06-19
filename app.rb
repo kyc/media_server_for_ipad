@@ -29,7 +29,7 @@ class String
      CharDet.detect(self[0..4096]).encoding
   end
   def yyets_srt
-    self.encode!('UTF-8', self.enc) =~ /繁体\&英文\.srt$/ ? self.split('/').last : nil
+    self.encode!('UTF-8', self.enc) =~ /(繁体\&英文\.srt$)|(CHS\.srt$)/ ? self.split('/').last : nil
   end 
 end
 
